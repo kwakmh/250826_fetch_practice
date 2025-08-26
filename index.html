@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>포켓몬 검색기</title>
 
-    <!-- ✅ 파비콘 & PWA 아이콘 -->
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+    <!-- ✅ Favicon 세트 -->
     <link rel="icon" href="./favicon.ico" sizes="any">
-    <link rel="manifest" href="./site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png?v=2">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=2">
+    <link rel="shortcut icon" href="./favicon.ico?v=2">
+    <link rel="manifest" href="./site.webmanifest?v=2">
+    <meta name="theme-color" content="#ffffff">
 
     <style>
       @font-face {
@@ -19,6 +21,7 @@
           format("woff2");
         font-display: swap;
       }
+
       :root {
         --dex-red: #e44747;
         --dex-dark: #b73737;
@@ -28,13 +31,16 @@
         --accent: #79e2ff;
         --radius: 18px;
       }
+
       * {
         box-sizing: border-box;
       }
+
       html,
       body {
         height: 100%;
       }
+
       body {
         margin: 0;
         font-family: "Ria", system-ui, sans-serif;
@@ -58,7 +64,7 @@
         z-index: 2;
       }
 
-      /* 상단바(LED, 타이틀) */
+      /* 상단바 */
       .topbar {
         display: flex;
         align-items: center;
@@ -67,6 +73,7 @@
         background: linear-gradient(180deg, #f9dede, #f1c2c2);
         border-bottom: 3px solid var(--dex-border);
       }
+
       .lens {
         width: 36px;
         height: 36px;
@@ -81,11 +88,13 @@
         box-shadow: inset 0 0 0 3px #bdefff, 0 4px 10px rgba(0, 0, 0, 0.25);
         border: 2px solid #195a8c;
       }
+
       .leds {
         display: flex;
         gap: 8px;
         margin-left: auto;
       }
+
       .led {
         width: 12px;
         height: 12px;
@@ -94,12 +103,15 @@
           inset 0 -1px 3px rgba(0, 0, 0, 0.4);
         border: 1px solid rgba(0, 0, 0, 0.2);
       }
+
       .led.red {
         background: radial-gradient(circle, #ffb0b0, #ff5a5a);
       }
+
       .led.yellow {
         background: radial-gradient(circle, #ffe9a6, #ffd24d);
       }
+
       .led.green {
         background: radial-gradient(circle, #b7ffc3, #39e07a);
       }
@@ -118,6 +130,7 @@
         grid-template-columns: 1fr auto auto;
         gap: 10px;
       }
+
       #search-form input,
       #search-form button {
         height: 42px;
@@ -125,16 +138,19 @@
         border: 0;
         font-weight: 700;
       }
+
       #search-form input {
         padding: 0 12px;
         border: 2px solid #d3d7e2;
         background: #fff;
       }
+
       #search-form input:focus {
         outline: none;
         border-color: #8aa2ff;
         box-shadow: 0 0 0 3px rgba(138, 162, 255, 0.25);
       }
+
       #search-form button {
         padding: 0 14px;
         cursor: pointer;
@@ -142,6 +158,7 @@
         background: linear-gradient(180deg, #7da9ff, #5b7dff);
         box-shadow: 0 2px 0 #415dff;
       }
+
       #random-btn {
         background: linear-gradient(180deg, #ff8f6c, #ff5a3a);
         box-shadow: 0 2px 0 #cf3b1c;
@@ -156,12 +173,14 @@
         color: #cfe2ff;
         box-shadow: inset 0 0 0 2px rgba(120, 160, 255, 0.15);
       }
+
       .grid {
         display: grid;
         grid-template-columns: 120px 1fr;
         gap: 16px;
         align-items: center;
       }
+
       .art {
         display: grid;
         place-items: center;
@@ -171,36 +190,39 @@
         background: linear-gradient(180deg, #1b2a45, #142036);
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
       }
+
+      /* ✅ 포켓몬 등장 애니메이션 */
       #container img {
         width: 96px;
         height: 96px;
         image-rendering: pixelated;
         filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+        opacity: 0;
+        filter: blur(10px) saturate(80%);
+        transform: scale(0.98);
+        transition: opacity .6s ease, filter .6s ease, transform .6s ease;
       }
+
+      #container img.is-visible {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1);
+      }
+
       .info {
         display: grid;
         gap: 8px;
       }
+
       .row strong {
         color: #9bbdff;
         font-size: 14px;
         letter-spacing: 0.5px;
       }
+
       .name {
         font-size: 22px;
         color: #e9f0ff;
-      }
-
-      /* 하단 그릴 */
-      .grill {
-        height: 10px;
-        border-radius: 8px;
-        background: repeating-linear-gradient(
-          90deg,
-          #d3d7e2 0 8px,
-          #b9bfcc 8px 14px
-        );
-        border: 1px solid #9aa3b5;
       }
 
       /* 반응형 */
@@ -227,8 +249,8 @@
         <div class="lens" aria-hidden="true"></div>
         <div style="font-weight: 800">포켓몬도감</div>
         <div class="leds" aria-hidden="true">
-          <span class="led red"></span><span class="led yellow"></span
-          ><span class="led green"></span>
+          <span class="led red"></span><span class="led yellow"></span>
+          <span class="led green"></span>
         </div>
       </div>
 
@@ -266,8 +288,6 @@
             </div>
           </section>
         </section>
-
-        <div class="grill" aria-hidden="true"></div>
       </div>
     </main>
 
@@ -304,6 +324,19 @@
         await searchName(name);
       }
 
+      // ✅ 포켓몬 등장 애니메이션 헬퍼
+      function revealSprite(url) {
+        const img = document.querySelector("#container img");
+        img.classList.remove("is-visible"); // 초기 상태(희미)
+        img.onload = () => {
+          requestAnimationFrame(() => img.classList.add("is-visible"));
+        };
+        const cacheBuster = url
+          ? `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`
+          : "";
+        img.src = cacheBuster;
+      }
+
       async function searchName(name) {
         const pokeNo = await changeNameToId(name);
         const response = await fetch(
@@ -312,9 +345,7 @@
         if (!response.ok) throw new Error("존재하지 않는 포켓몬!");
         const data = await response.json();
 
-        document
-          .querySelector("#container img")
-          .setAttribute("src", data?.sprites?.front_default || "");
+        revealSprite(data?.sprites?.front_default || "");
 
         const koNameResponse = await fetch(
           `https://pokeapi.co/api/v2/pokemon-species/${pokeNo}`
@@ -342,9 +373,7 @@
         if (!response.ok) throw new Error("존재하지 않는 포켓몬!");
         const data = await response.json();
 
-        document
-          .querySelector("#container img")
-          .setAttribute("src", data?.sprites?.front_default || "");
+        revealSprite(data?.sprites?.front_default || "");
 
         const koNameResponse = await fetch(
           `https://pokeapi.co/api/v2/pokemon-species/${pokeNo}`
@@ -364,9 +393,11 @@
         document.querySelector("#poke-name").value = koName;
         localStorage.setItem("memory", koName);
       }
+
       function getRandomId(max = 1025) {
         return Math.floor(Math.random() * max) + 1;
       }
+
       async function showRandomPokemon() {
         try {
           await searchById(getRandomId(1025));

@@ -1,194 +1,387 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>포켓몬 검색기</title>
+
+    <!-- ✅ 파비콘 & PWA 아이콘 -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+    <link rel="icon" href="./favicon.ico" sizes="any">
+    <link rel="manifest" href="./site.webmanifest">
+
     <style>
       @font-face {
-        font-family: "Simple";
-        src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-1@1.1/Danjo-bold-Regular.woff2")
+        font-family: "Ria";
+        src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2410-1@1.0/RiaSans-ExtraBold.woff2")
           format("woff2");
-        font-weight: normal;
         font-display: swap;
       }
-
-      body,
-      input {
-        font-family: "Simple";
+      :root {
+        --dex-red: #e44747;
+        --dex-dark: #b73737;
+        --dex-border: #8f2a2a;
+        --dex-panel: #f6f2f2;
+        --screen: #0f1b2e;
+        --accent: #79e2ff;
+        --radius: 18px;
       }
-
-      /* section */
-      section {
-        margin: 1rem 2rem; /*  세로(위,아래) 가로(왼.오) */
+      * {
+        box-sizing: border-box;
       }
-      /* controller */
-      #search-form {
-        display: flex;
-        flex-direction: column; /* 기본적인 행 방향을 열 방향으로 (기본 축) */
-        gap: 0.3rem;
-        align-items: center; /* cross axis 가운데 정렬 (가로 정렬) */
+      html,
+      body {
+        height: 100%;
       }
-      #search-form * {
-        width: 240px;
+      body {
         margin: 0;
-        padding: 0.3rem;
-        border: 1px solid grey;
-        border-radius: 0.3rem;
-      }
-      /* container */
-      #container,
-      #poke-info > section {
-        display: flex;
-        flex-direction: column; /* 기본적인 행 방향을 열 방향으로 (기본 축) */
-        gap: 0.3rem;
-        align-items: center; /* cross axis 가운데 정렬 (가로 정렬) */
+        font-family: "Ria", system-ui, sans-serif;
+        background: url("forest.png") no-repeat center center fixed;
+        background-size: cover;
+        display: grid;
+        place-items: center;
+        padding: 22px;
       }
 
-      .hide {
-        display: none;
+      /* Pokédex 프레임 */
+      .pokedex {
+        width: min(92vw, 560px);
+        background: linear-gradient(180deg, var(--dex-red), var(--dex-dark));
+        border: 4px solid var(--dex-border);
+        border-radius: calc(var(--radius) + 6px);
+        box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.2),
+          0 18px 50px rgba(22, 22, 22, 0.25), 0 2px 10px rgba(22, 22, 22, 0.15);
+        color: #1a1a1a;
+        overflow: hidden;
+        z-index: 2;
+      }
+
+      /* 상단바(LED, 타이틀) */
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: linear-gradient(180deg, #f9dede, #f1c2c2);
+        border-bottom: 3px solid var(--dex-border);
+      }
+      .lens {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 35% 35%,
+          #8be0ff,
+          #3db7ff 40%,
+          #0078c9 60%,
+          #004a7f 100%
+        );
+        box-shadow: inset 0 0 0 3px #bdefff, 0 4px 10px rgba(0, 0, 0, 0.25);
+        border: 2px solid #195a8c;
+      }
+      .leds {
+        display: flex;
+        gap: 8px;
+        margin-left: auto;
+      }
+      .led {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3),
+          inset 0 -1px 3px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(0, 0, 0, 0.2);
+      }
+      .led.red {
+        background: radial-gradient(circle, #ffb0b0, #ff5a5a);
+      }
+      .led.yellow {
+        background: radial-gradient(circle, #ffe9a6, #ffd24d);
+      }
+      .led.green {
+        background: radial-gradient(circle, #b7ffc3, #39e07a);
+      }
+
+      /* 내부 패널 */
+      .panel {
+        background: var(--dex-panel);
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+      }
+
+      /* 검색 영역 */
+      #search-form {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 10px;
+      }
+      #search-form input,
+      #search-form button {
+        height: 42px;
+        border-radius: 10px;
+        border: 0;
+        font-weight: 700;
+      }
+      #search-form input {
+        padding: 0 12px;
+        border: 2px solid #d3d7e2;
+        background: #fff;
+      }
+      #search-form input:focus {
+        outline: none;
+        border-color: #8aa2ff;
+        box-shadow: 0 0 0 3px rgba(138, 162, 255, 0.25);
+      }
+      #search-form button {
+        padding: 0 14px;
+        cursor: pointer;
+        color: #fff;
+        background: linear-gradient(180deg, #7da9ff, #5b7dff);
+        box-shadow: 0 2px 0 #415dff;
+      }
+      #random-btn {
+        background: linear-gradient(180deg, #ff8f6c, #ff5a3a);
+        box-shadow: 0 2px 0 #cf3b1c;
+      }
+
+      /* 도감 스크린 */
+      .screen {
+        border-radius: 16px;
+        background: linear-gradient(180deg, #172339, #0d1626);
+        border: 3px solid #0a1322;
+        padding: 16px;
+        color: #cfe2ff;
+        box-shadow: inset 0 0 0 2px rgba(120, 160, 255, 0.15);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 16px;
+        align-items: center;
+      }
+      .art {
+        display: grid;
+        place-items: center;
+        width: 120px;
+        height: 120px;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #1b2a45, #142036);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+      }
+      #container img {
+        width: 96px;
+        height: 96px;
+        image-rendering: pixelated;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+      }
+      .info {
+        display: grid;
+        gap: 8px;
+      }
+      .row strong {
+        color: #9bbdff;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+      }
+      .name {
+        font-size: 22px;
+        color: #e9f0ff;
+      }
+
+      /* 하단 그릴 */
+      .grill {
+        height: 10px;
+        border-radius: 8px;
+        background: repeating-linear-gradient(
+          90deg,
+          #d3d7e2 0 8px,
+          #b9bfcc 8px 14px
+        );
+        border: 1px solid #9aa3b5;
+      }
+
+      /* 반응형 */
+      @media (max-width: 560px) {
+        #search-form {
+          grid-template-columns: 1fr 1fr;
+        }
+        #search-form button#random-btn {
+          grid-column: span 2;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+          justify-items: center;
+        }
+        .name {
+          text-align: center;
+        }
       }
     </style>
-
-    <meta property="og:title" content="포켓몬 도감" />
-    <meta property="og:description" content="포켓몬을 찾아보세요" />
-    <meta
-      property="og:image"
-      content="https://cdn.pixabay.com/photo/2016/08/14/14/58/pokemon-1593048_1280.jpg"
-    />
-
-
   </head>
   <body>
-    <!-- https://pokeapi.co/ -->
-    <!-- https://pokeapi.co/docs/v2 -->
-    <section id="controller">
-      <form id="search-form">
-        <input
-          type="text"
-          name="poke-name"
-          id="poke-name"
-          placeholder="이름을 입력해주세요"
-        />
-        <button id="search-form-btn">검색</button>
-      </form>
-    </section>
-    <section id="container">
-      <div id="message">검색해보세요!</div>
-      <section class="hide" id="poke-info">
-        <section>
-          <div>
-            <strong>이름</strong> : <span id="poke-koname">포켓몬</span>
-          </div>
-          <div>
-            <strong>영어</strong> : <span id="poke-enname">Pokemon</span>
-          </div>
-          <img src="" alt="포켓몬 사진" />
+    <main class="pokedex">
+      <div class="topbar">
+        <div class="lens" aria-hidden="true"></div>
+        <div style="font-weight: 800">포켓몬도감</div>
+        <div class="leds" aria-hidden="true">
+          <span class="led red"></span><span class="led yellow"></span
+          ><span class="led green"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <!-- 컨트롤러 -->
+        <section id="controller">
+          <form id="search-form">
+            <input
+              type="text"
+              name="poke-name"
+              id="poke-name"
+              placeholder="이름을 입력(예: 피카츄)"
+            />
+            <button id="search-form-btn">검색</button>
+            <button id="random-btn" type="button">랜덤 포켓몬</button>
+          </form>
         </section>
-      </section>
-    </section>
+
+        <!-- 스크린 -->
+        <section class="screen">
+          <div id="message">검색해보세요!</div>
+          <section class="hide" id="poke-info">
+            <div class="grid" id="container">
+              <div class="art">
+                <img src="" alt="포켓몬 사진" />
+              </div>
+              <div class="info">
+                <div class="row name">
+                  <strong>이름</strong> : <span id="poke-koname">포켓몬</span>
+                </div>
+                <div class="row">
+                  <strong>영어</strong> : <span id="poke-enname">Pokemon</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <div class="grill" aria-hidden="true"></div>
+      </div>
+    </main>
+
     <script>
       async function changeNameToId(name) {
         if (localStorage.getItem("nameToId")) {
           return JSON.parse(localStorage.getItem("nameToId"))[name];
         }
-        // const pokeLength = 151;
         const pokeLength = 1025;
         const nameToId = {};
         async function fetchPokeKor(id) {
-          const koNameResponse = await fetch(
+          const res = await fetch(
             `https://pokeapi.co/api/v2/pokemon-species/${id}`
           );
-          if (!koNameResponse.ok) throw new Error("존재하지 않는 포켓몬!");
-          const koNameData = await koNameResponse.json();
-          const { names } = koNameData;
-          const koNames = names.filter((x) => x.language.name === "ko");
-          const koName = koNames[0].name;
-          nameToId[koName] = id;
+          if (!res.ok) throw new Error("존재하지 않는 포켓몬!");
+          const data = await res.json();
+          const koNames = data.names.filter((x) => x.language.name === "ko");
+          nameToId[koNames[0].name] = id;
         }
         const promises = [];
-        for (let i = 1; i < pokeLength; i++) {
-          promises.push(fetchPokeKor(i));
-        }
+        for (let i = 1; i < pokeLength; i++) promises.push(fetchPokeKor(i));
         await Promise.all(promises);
-        // for (let i = 1; i <= pokeLength; i++) {
-        //   const koNameResponse = await fetch(
-        //     `https://pokeapi.co/api/v2/pokemon-species/${i}`
-        //   );
-        //   if (!koNameResponse.ok) throw new Error("존재하지 않는 포켓몬!");
-        //   const koNameData = await koNameResponse.json();
-        //   const { names } = koNameData;
-        //   const koNames = names.filter((x) => x.language.name === "ko");
-        //   const koName = koNames[0].name;
-        //   nameToId[koName] = i; // id
-        // }
-        console.log(nameToId);
-        // return id;
         localStorage.setItem("nameToId", JSON.stringify(nameToId));
         return nameToId[name];
       }
 
       async function searchPoke(event) {
-        event.preventDefault(); // 폼 기본 작용 없애기
-        // https://pokeapi.co/api/v2/pokemon/{id or name}/
-        // https://pokeapi.co/docs/v2#pokemon
-
-        // No = Number => search-form -> poke-name -> id
-        // 전체의 한글이름과 번호의 연결.
-        // const pokeNo = Math.ceil(Math.random() * 1025); // 1 ~ 1025;
+        event.preventDefault();
         const name = document.querySelector("#poke-name").value;
-        if (!name) throw new Error("비어 있음!");
+        if (!name) {
+          alert("이름을 입력해주세요!");
+          return;
+        }
         await searchName(name);
       }
 
       async function searchName(name) {
         const pokeNo = await changeNameToId(name);
-
         const response = await fetch(
           `https://pokeapi.co/api/v2/pokemon/${pokeNo}`
         );
         if (!response.ok) throw new Error("존재하지 않는 포켓몬!");
+        const data = await response.json();
 
-        // alert(await response.text());
-        const data = await response.json(); // JavaScript 객체
-        console.log(Object.keys(data));
-        const { sprites } = data;
-        const { front_default } = sprites;
-        console.log(front_default); // #container img src
         document
           .querySelector("#container img")
-          .setAttribute("src", front_default);
+          .setAttribute("src", data?.sprites?.front_default || "");
+
         const koNameResponse = await fetch(
           `https://pokeapi.co/api/v2/pokemon-species/${pokeNo}`
         );
         if (!koNameResponse.ok) throw new Error("존재하지 않는 포켓몬!");
         const koNameData = await koNameResponse.json();
-        // console.log(Object.keys(koNameData));
-        const { names } = koNameData;
-        // console.log(Object.keys(names));
-        console.log(names);
-        // 1025번?
-        const koNames = names.filter((x) => x.language.name === "ko");
-        console.log(koNames);
-        const koName = koNames[0].name;
-        console.log(koName);
+        const koName = koNameData.names.filter(
+          (x) => x.language.name === "ko"
+        )[0].name;
+
         document.querySelector("#poke-koname").textContent = koName;
         document.querySelector("#poke-enname").textContent = data.name;
 
         document.querySelector("#poke-info").classList.remove("hide");
         document.querySelector("#message").classList.add("hide");
 
-        // ** 검색어를 저장 **
-        localStorage.setItem("memory", name); // 빈 것도 아니고, 존재하는 포켓몬.
+        localStorage.setItem("memory", name);
       }
 
-      // submit은 form에 넣는 것
-      const searchForm = document.querySelector("#search-form");
-      searchForm.addEventListener("submit", searchPoke);
-      // 함수를 eventListener로 넣을 때 ()를 생략해서 함수 자체를 넣는다
-      // () -> 실행하겠다는 말.
+      /* 랜덤 포켓몬 */
+      async function searchById(pokeNo) {
+        const response = await fetch(
+          `https://pokeapi.co/api/v2/pokemon/${pokeNo}`
+        );
+        if (!response.ok) throw new Error("존재하지 않는 포켓몬!");
+        const data = await response.json();
 
-      // 화면이 최초에 로딩에 될 때 실행
+        document
+          .querySelector("#container img")
+          .setAttribute("src", data?.sprites?.front_default || "");
+
+        const koNameResponse = await fetch(
+          `https://pokeapi.co/api/v2/pokemon-species/${pokeNo}`
+        );
+        if (!koNameResponse.ok) throw new Error("존재하지 않는 포켓몬!");
+        const koNameData = await koNameResponse.json();
+        const koName =
+          (koNameData.names.find((n) => n.language.name === "ko") || {}).name ||
+          "포켓몬";
+
+        document.querySelector("#poke-koname").textContent = koName;
+        document.querySelector("#poke-enname").textContent = data.name;
+
+        document.querySelector("#poke-info").classList.remove("hide");
+        document.querySelector("#message").classList.add("hide");
+
+        document.querySelector("#poke-name").value = koName;
+        localStorage.setItem("memory", koName);
+      }
+      function getRandomId(max = 1025) {
+        return Math.floor(Math.random() * max) + 1;
+      }
+      async function showRandomPokemon() {
+        try {
+          await searchById(getRandomId(1025));
+        } catch (e) {
+          alert(e.message || "문제가 발생했습니다.");
+        }
+      }
+
+      document
+        .querySelector("#search-form")
+        .addEventListener("submit", searchPoke);
+      document
+        .querySelector("#random-btn")
+        .addEventListener("click", showRandomPokemon);
+
       document.addEventListener("DOMContentLoaded", async () => {
         const memory = localStorage.getItem("memory");
         if (!memory) return;
